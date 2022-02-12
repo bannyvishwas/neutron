@@ -60,7 +60,7 @@ def getKey(password):
 
 def helpwn():
       print('')
-      print('Credit\t:\t@BugBoyB')
+      print('Credit\t:\t@bannyvishwas')
       print ('Neutron Encryption Tool Commands:')
       print('\t-h or --help\t:\tOpens help commands.')
       print('\t-e or --encrypt\t:\tEncrypt the files.')
