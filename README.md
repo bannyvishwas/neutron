@@ -53,7 +53,7 @@ E.g.    neutron -e -r "C:\Users" -x ".jpg,.exe,.txt" -k "MyKey"
    ```
 2. Use the following command to build exe
    ```bash
-   pyinstaller --onefile --windowed --icon=logo.png Neutron.py
+   pyinstaller --onefile --console --icon=logo.png Neutron.py
    ```
 3. You can find you exe in `dist` folder in root directory.
 
