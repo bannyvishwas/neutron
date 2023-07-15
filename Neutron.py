@@ -4,10 +4,22 @@ from Crypto.Hash import SHA256
 from Crypto import Random
 import sys, getopt
 
+new_dir_name = "_neutron"
+parent_folder_index = None
+
+def create_new_dir(filename,postfix):
+    dir_path = filename.split("\\")
+    dir_path[parent_folder_index] = new_dir_name + postfix
+    new_dir_path = "\\".join(dir_path)
+    only_dir = "\\".join(dir_path[:-1])
+    if not os.path.exists(only_dir):
+        os.makedirs(only_dir)
+    return new_dir_path
 
 def encrypt(key, filename):
     chunksize = 64 * 1024
-    outputFile = filename+".ntn"
+   #  outputFile = filename+".ntn"
+    outputFile = create_new_dir(filename,"_enc") + ".ntn"
     filesize = str(os.path.getsize(filename)).zfill(16)
     IV = Random.new().read(16)
 
@@ -34,6 +46,7 @@ def decrypt(key, filename):
     if filename.endswith('.ntn'):
         chunksize = 64 * 1024
         outputFile = filename[:-4]
+        outputFile = create_new_dir(filename,"_dec")[:-4]
 
         with open(filename, 'rb') as infile:
             filesize = int(infile.read(16))
@@ -76,6 +89,7 @@ def helpwn():
       print('\tneutron -e -f "C:\\Users\\img.jpg" -k "MyKey"')
       
 def main(argv):
+   global new_dir_name,parent_folder_index
    inputfile = ''
    inputdir=''
    ext=''
@@ -98,6 +112,12 @@ def main(argv):
       elif opt in ("-r", "--dir"):
          if not file_enable:
             inputdir = arg
+            dir_list = arg.split("\\")
+            parent_folder_index = len(dir_list) - 1
+            new_dir_name = dir_list[-1]
+            if new_dir_name is None or new_dir_name == '':
+                new_dir_name = dir_list[-2]
+                parent_folder_index = len(dir_list) - 2
             dir_enable=True
          else:
             print('Invalid Syntax : -r cannot be used with -f.')
@@ -132,7 +152,7 @@ def main(argv):
          else:
             print('Invalid Syntax: -d cannot be used with -e')
             sys.exit()
-            
+
    if (encry or decry) and (file_enable or dir_enable) and key_enable:
       keyhash=getKey(key)
       exttuple=tuple(ext.split(","))
@@ -154,10 +174,10 @@ def main(argv):
                     try:
                         if encry: 
                             encrypt(keyhash, f)
-                            os.remove(f)
+                           #  os.remove(f)
                         else:
                             decrypt(keyhash,f)
-                            os.remove(f)
+                           #  os.remove(f)
                     except:
                         continue
       elif file_enable:
@@ -165,10 +185,10 @@ def main(argv):
                    try:
                         if encry: 
                             encrypt(keyhash, inputfile)
-                            os.remove(inputfile)
+                           #  os.remove(inputfile)
                         else:
                             decrypt(keyhash,inputfile)
-                            os.remove(inputfile)
+                           #  os.remove(inputfile)
                    except:
                         print('Operation Failed!')
       else:

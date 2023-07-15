@@ -45,6 +45,18 @@ E.g.    neutron -e -r "C:\Users" -x ".jpg,.exe,.txt" -k "MyKey"
         neutron -e -f "C:\Users\img.jpg" -k "MyKey"
 ```
 
+## Convert Py to EXE
+1. Install pyinstaller
+   ```bash
+   pip install pyinstaller
+   pip install Pillow
+   ```
+2. Use the following command to build exe
+   ```bash
+   pyinstaller --onefile --windowed --icon=logo.png Neutron.py
+   ```
+3. You can find you exe in `dist` folder in root directory.
+
 ## Contributing
 
 1. Fork it (<https://github.com/bannyvishwas/neutron/fork>)
