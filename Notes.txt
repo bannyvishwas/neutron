@@ -1,0 +1,1 @@
+pyinstaller --onefile --icon=logo.png --collect-all libpython Neutron.py
