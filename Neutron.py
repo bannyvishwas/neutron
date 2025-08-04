@@ -3,23 +3,32 @@ from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
 from Crypto import Random
 import sys, getopt
+import getpass
+from pathlib import Path
 
-new_dir_name = "_neutron"
 parent_folder_index = None
 
 def create_new_dir(filename,postfix):
-    dir_path = filename.split("\\")
-    dir_path[parent_folder_index] = new_dir_name + postfix
-    new_dir_path = "\\".join(dir_path)
-    only_dir = "\\".join(dir_path[:-1])
-    if not os.path.exists(only_dir):
-        os.makedirs(only_dir)
-    return new_dir_path
+    filepath = Path(filename)
+    dirname = filepath.parent
+    fname = filepath.name
+    parts = list(filepath.parts)
+    parts[parent_folder_index] = parts[parent_folder_index] + postfix
+    new_file_path = Path(*parts)
+    new_parent = new_file_path.parent
 
-def encrypt(key, filename):
+    if not new_parent.exists():
+        new_parent.mkdir(parents=True, exist_ok=True)
+    
+    return str(new_file_path)
+
+def encrypt(key, filename,dir_enable=False):
     chunksize = 64 * 1024
-   #  outputFile = filename+".ntn"
-    outputFile = create_new_dir(filename,"_enc") + ".ntn"
+    outputFile = filename+".ntn"
+    
+    if dir_enable:
+        outputFile = create_new_dir(filename,"_enc") + ".ntn"
+    
     filesize = str(os.path.getsize(filename)).zfill(16)
     IV = Random.new().read(16)
 
@@ -42,12 +51,13 @@ def encrypt(key, filename):
     print('Encrypted\t:\t',filename)
 
 
-def decrypt(key, filename):
+def decrypt(key, filename,dir_enable=False):
     if filename.endswith('.ntn'):
         chunksize = 64 * 1024
         outputFile = filename[:-4]
-        outputFile = create_new_dir(filename,"_dec")[:-4]
-
+        if dir_enable:
+            outputFile = create_new_dir(filename,"_dec")[:-4]
+        
         with open(filename, 'rb') as infile:
             filesize = int(infile.read(16))
             IV = infile.read(16)
@@ -81,15 +91,15 @@ def helpwn():
       print('\t-r or --dir\t:\tSelect the directory to encrypt.')
       print('\t-f or --file\t:\tSelect only a File to Encrypt.')
       print('\t-x or --ext\t:\tSelect Files with Extension used with -d.')
-      print('\t-k or --key\t:\tSpecified Key for Encryption.')
+    #   print('\t-k or --key\t:\tSpecified Key for Encryption.')
       print('')
-      print('E.g.\tneutron -e -r "C:\\Users" -x ".jpg,.exe,.txt" -k "MyKey"')
-      print('\tneutron -e -r "C:\\Users" -k "MyKey"')
-      print('\tneutron -d -r "C:\\Users" -k "MyKey"')
-      print('\tneutron -e -f "C:\\Users\\img.jpg" -k "MyKey"')
+      print('E.g.\tneutron -e -r "C:\\Users" -x ".jpg,.exe,.txt"')
+      print('\tneutron -e -r "C:\\Users"')
+      print('\tneutron -d -r "C:\\Users"')
+      print('\tneutron -e -f "C:\\Users\\img.jpg"')
       
 def main(argv):
-   global new_dir_name,parent_folder_index
+   global parent_folder_index
    inputfile = ''
    inputdir=''
    ext=''
@@ -112,12 +122,9 @@ def main(argv):
       elif opt in ("-r", "--dir"):
          if not file_enable:
             inputdir = arg
-            dir_list = arg.split("\\")
+            filepath = Path(inputdir)
+            dir_list = filepath.parts
             parent_folder_index = len(dir_list) - 1
-            new_dir_name = dir_list[-1]
-            if new_dir_name is None or new_dir_name == '':
-                new_dir_name = dir_list[-2]
-                parent_folder_index = len(dir_list) - 2
             dir_enable=True
          else:
             print('Invalid Syntax : -r cannot be used with -f.')
@@ -137,9 +144,9 @@ def main(argv):
          else:
             print('Invalid Syntax : -x only used with -r.')
             sys.exit()
-      elif opt in ("-k", "--key"):
-         key = arg
-         key_enable=True
+    #   elif opt in ("-k", "--key"):
+    #      key = arg
+    #      key_enable=True
       elif opt in ("-e","--encrypt"):
          if not decry:
             encry=True
@@ -153,7 +160,11 @@ def main(argv):
             print('Invalid Syntax: -d cannot be used with -e')
             sys.exit()
 
-   if (encry or decry) and (file_enable or dir_enable) and key_enable:
+   if (encry or decry) and (file_enable or dir_enable):
+      if encry:
+        key = getpass.getpass("Enter Encryption Key : ")
+      else:
+          key = getpass.getpass("Enter Decryption Key : ")
       keyhash=getKey(key)
       exttuple=tuple(ext.split(","))
       if dir_enable:
@@ -173,12 +184,13 @@ def main(argv):
                  for f in files:
                     try:
                         if encry: 
-                            encrypt(keyhash, f)
+                            encrypt(keyhash, f, dir_enable=True)
                            #  os.remove(f)
                         else:
-                            decrypt(keyhash,f)
+                            decrypt(keyhash,f,dir_enable=True)
                            #  os.remove(f)
-                    except:
+                    except Exception as e:
+                        print('[Skipping] Operation Failed : ',f,e)
                         continue
       elif file_enable:
            if os.path.exists(inputfile) and os.path.isfile(inputfile):
@@ -189,8 +201,8 @@ def main(argv):
                         else:
                             decrypt(keyhash,inputfile)
                            #  os.remove(inputfile)
-                   except:
-                        print('Operation Failed!')
+                   except Exception as e:
+                        print('Operation Failed : ',e)
       else:
           helpwn()
           sys.exit()
